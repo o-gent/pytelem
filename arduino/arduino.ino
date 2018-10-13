@@ -1,18 +1,42 @@
 #include "tcp.h"
 
-Packer packer;
+Send send;
 int* message;
 int a;
+//String r;
+char r;
+char b = '1';
+
+bool check;
 
 void setup() {
   Serial.begin(9600);
+  //Serial.setTimeout(200);
+  a = 0;
+  // initial handshake
+  r = Serial.read();
 }
 
 
 void loop() {
-  message = packer.sensor_heartbeat();
-  Serial.print(packer.serialise(message)); Serial.print("\n");
-  packer.payload[2] = a;
+  message = send.sensor_heartbeat();
+  
+  Serial.print(send.serialise(message)); Serial.print("\n");
+  
+  check = true;
+  while(check) { 
+    //r = Serial.readString();
+    if(Serial.available() > 0){
+      r = Serial.read();
+    }
+    if(r == b){
+      check = false;
+    }
+    else{
+      Serial.print(send.serialise(message)); Serial.print("\n");
+    }
+  }
+  
+  send.payload[2] = a;
   a++;
-  delay(1000);
 }

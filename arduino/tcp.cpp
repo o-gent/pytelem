@@ -1,6 +1,7 @@
 #include "tcp.h"
 
-int* Packer::sensor_heartbeat(){
+
+int* Send::sensor_heartbeat(){
   packet_count += 1;
 
   //header
@@ -18,7 +19,7 @@ int* Packer::sensor_heartbeat(){
   return current_packet;
 }
 
-String Packer::serialise(int input[20]){
+String Send::serialise(int input[20]){
   String output;
   
   output = "<";
@@ -29,4 +30,10 @@ String Packer::serialise(int input[20]){
   output += ">";
 
   return output;
+}
+
+
+int Get::serial_handler(String message){
+  String output;
+  
 }

@@ -3,7 +3,8 @@
 
 #include <Arduino.h> 
 
-class Packer{
+
+class Send{
   public:
     int packet_count = 0;
     int payload[10] = {0};
@@ -13,17 +14,13 @@ class Packer{
     String serialise(int input[20]);
 };
 
-#endif
+
+class Get{
+  public:
+    int serial_handler(String message);
 
 
-/*
-struct packet{
-  // header
-  int data_type;
-  double packet_number;
-  // payload  
-  double payload [10];
-  // footer
-  int checksum;
 };
-*/
+
+
+#endif

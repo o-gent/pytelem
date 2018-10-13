@@ -32,3 +32,4 @@
 *.app
 class_example.cpp
 example.cpp
+python/__pycache__/serial_handle.cpython-37.pyc

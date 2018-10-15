@@ -7,10 +7,11 @@ class datalink():
         self.packet_num = 1
         self.data = [0 for i in range(20)]
 
-        #send initial ready packet
+        #handshake (to be implimented)
     
 
     def packet_handle(self):
+        """ fetches raw serial data from buffer, returns payload as list """
         raw_message = self.conn.readline().decode("utf-8")
         datapacket = self.deserialise(raw_message)
         
@@ -24,18 +25,22 @@ class datalink():
             # call packet_handle again..
             self.packet_handle() 
 
+        #returns full packet for debugging for now.
         return self.data 
 
 
     def deserialise(self, raw_message):
+        """ runs consistancy checks on packet, returns false if not consistent, else returns packet """
         # this is a bit messy..
         verified = False
         
+        # first check 
         if raw_message.startswith("<") and raw_message.endswith(">\n"): 
             test1 = True
         else: 
             test1 = False
 
+        # second check + try, except loop if no "-" exist
         try:
             datapacket = raw_message[1:-1].split("-")
 

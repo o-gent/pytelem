@@ -2,6 +2,8 @@
 
 
 int* Send::sensor_heartbeat(){
+  // creates packet to be sent with header and footer data
+
   packet_count += 1;
 
   //header
@@ -9,17 +11,21 @@ int* Send::sensor_heartbeat(){
   current_packet[2] = 1;   //packet type
   current_packet[3] = packet_count;
   current_packet[6] = 0;
+
   //payload
   for(unsigned int a = 1, b = 7; a<10; a++, b++){
     current_packet[b] = payload[a];
   }
-  //footer
+  
+  //footer - checksum to be implimented
   current_packet[17] = 0;
 
   return current_packet;
 }
 
 String Send::serialise(int input[20]){
+  // changes array to string, for sending over serial
+  
   String output;
   
   output = "<";

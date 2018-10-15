@@ -18,10 +18,17 @@ void setup() {
 
 
 void loop() {
+  // example of data being injected to payload
+  send.payload[2] = a;
+  a++;
+
+  // embeds payload in packet and sends over serial
   message = send.sensor_heartbeat();
   Serial.print(send.serialise(message)); Serial.print("\n");
   
-  // check if packet was validated
+
+  // check if packet was validated, else, resend until validated
+  // needs tidying into own function. 
   ack_check = true;
   while(ack_check) { 
     //r = Serial.readString();
@@ -34,8 +41,4 @@ void loop() {
       Serial.print(send.serialise(message)); Serial.print("\n");
     }
   }
-  
-  // example of data being injected to payload
-  send.payload[2] = a;
-  a++;
 }

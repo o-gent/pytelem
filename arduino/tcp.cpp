@@ -1,5 +1,10 @@
 #include "tcp.h"
 
+Send::Send(){
+  // start serial communication here
+
+}
+
 
 int* Send::sensor_heartbeat(){
   // creates packet to be sent with header and footer data
@@ -23,6 +28,7 @@ int* Send::sensor_heartbeat(){
   return current_packet;
 }
 
+
 String Send::serialise(int input[20]){
   // changes array to string, for sending over serial
   
@@ -36,6 +42,22 @@ String Send::serialise(int input[20]){
   output += ">";
 
   return output;
+}
+
+
+void Send::recieved_check(){
+  ack_check = false;
+  do { 
+      //r = Serial.readString();
+      r = Serial.read();
+      
+      if(r == b){
+        ack_check = true;
+      }
+      else{
+        Serial.print(this->serialise(message)); Serial.print("\n");
+      }
+    } while(ack_check == false);
 }
 
 

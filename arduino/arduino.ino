@@ -6,7 +6,7 @@ int* message;
 int a;
 char r;
 char b = '1';
-bool check;
+bool ack_check;
 
 void setup() {
   Serial.begin(9600);

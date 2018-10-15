@@ -9,7 +9,7 @@ def main():
 
 
 if __name__ == "__main__":
-    port = "COM3"
+    port = "COM4"
     link = datalink(port)
     
     while True:

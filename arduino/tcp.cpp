@@ -45,7 +45,7 @@ String Send::serialise(int input[20]){
 }
 
 
-void Send::recieved_check(){
+void Send::received_check(){
   ack_check = false;
   do { 
       //r = Serial.readString();

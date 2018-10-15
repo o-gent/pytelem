@@ -17,7 +17,7 @@ class Send{
     Send();
     int* sensor_heartbeat();
     String serialise(int input[20]);
-    void recieved_check();
+    void received_check();
 };
 
 

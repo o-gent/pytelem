@@ -19,5 +19,5 @@ void loop() {
   // embeds payload in packet and sends over serial
   send.message = send.sensor_heartbeat();
   Serial.print(send.serialise(send.message)); Serial.print("\n");
-  send.recieved_check();
+  send.received_check();
 }

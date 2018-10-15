@@ -9,9 +9,9 @@ class datalink():
 
         #send initial ready packet
     
+
     def packet_handle(self):
         raw_message = self.conn.readline().decode("utf-8")
-        print(raw_message)
         datapacket = self.deserialise(raw_message)
         
         if datapacket:
@@ -26,8 +26,11 @@ class datalink():
 
         return self.data 
 
+
     def deserialise(self, raw_message):
+        # this is a bit messy..
         verified = False
+        
         if raw_message.startswith("<") and raw_message.endswith(">\n"): 
             test1 = True
         else: 
@@ -47,11 +50,11 @@ class datalink():
         except Exception:
             verified = False
 
-
         if verified:
             return datapacket
         else:
             return False
+
 
     def send(self, message):
         """ place holder """

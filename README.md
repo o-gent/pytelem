@@ -15,15 +15,15 @@ The main.py and arduino.ino are example usages - serial_handle.py and tcp.cpp in
 ### Current work:
 
 
-[ ] implement checksum arduino functionality and validity check
+- [ ] implement checksum arduino functionality and validity check
 
-[ ] implement different packet types to allow for unchecked and checked packets (TCP/UDP)
+- [ ] implement different packet types to allow for unchecked and checked packets (TCP/UDP)
 
-[ ] implement structure for sending commands to arduino
+- [ ] implement structure for sending commands to arduino
 
-[ ] allow dynamic packet sizes
+- [ ] allow dynamic packet sizes
 
-[ ] have some kind of packet identity so packets for different purposes can be requested - kind of like internet ports
+- [ ] have some kind of packet identity so packets for different purposes can be requested - kind of like internet ports
 
 
 ### Issues:

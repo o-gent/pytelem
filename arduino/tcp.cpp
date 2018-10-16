@@ -1,14 +1,21 @@
 #include "tcp.h"
 
-Send::Send(){
+Datalink::Datalink(){
   // start serial communication here
-
 }
 
 
-int* Send::sensor_heartbeat(){
-  // creates packet to be sent with header and footer data
+void Datalink::send_payload(){
+  // embeds payload in packet and sends over serial
+  this->message = this->packet_maker();
+  Serial.print(this->serialise(this->message)); Serial.print("\n");
+  this->received_check();
+}
 
+
+int* Datalink::packet_maker(){
+  // creates packet to be sent with header and footer data
+  
   packet_count += 1;
 
   //header
@@ -29,7 +36,7 @@ int* Send::sensor_heartbeat(){
 }
 
 
-String Send::serialise(int input[20]){
+String Datalink::serialise(int input[20]){
   // changes array to string, for sending over serial
   
   String output;
@@ -45,11 +52,15 @@ String Send::serialise(int input[20]){
 }
 
 
-void Send::received_check(){
+void Datalink::received_check(){
   ack_check = false;
   do { 
       //r = Serial.readString();
       r = Serial.read();
+
+      while(r != '0' && r != '1'){
+        r = Serial.read();
+      }
       
       if(r == b){
         ack_check = true;
@@ -61,7 +72,7 @@ void Send::received_check(){
 }
 
 
-int Get::serial_handler(String message){
+int Datalink::serial_handler(String message){
   //unimplimented
   String output;
 }

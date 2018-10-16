@@ -3,14 +3,14 @@ import serial
 
 class datalink():
     def __init__(self, port):
-        self.conn = serial.Serial(port, 9600)
+        self.conn = serial.Serial(port, 115200)
         self.packet_num = 1
         self.data = [0 for i in range(20)]
 
         #handshake (to be implimented)
     
 
-    def packet_handle(self):
+    def get_packet(self):
         """ fetches raw serial data from buffer, returns payload as list """
         raw_message = self.conn.readline().decode("utf-8")
         datapacket = self.deserialise(raw_message)
@@ -23,7 +23,7 @@ class datalink():
             print("packet not recieved sucessfully")
             self.send("0") # request new data packet
             # call packet_handle again..
-            self.packet_handle() 
+            self.get_packet() 
 
         #returns full packet for debugging for now.
         return self.data 

@@ -4,7 +4,7 @@ from serial_handle import datalink
 
 def main():
     # fetches and processes data, returns array with payload only
-    data = link.packet_handle()
+    data = link.get_packet()
     print(data)
     # do stuff
 

@@ -1,11 +1,10 @@
 #include "tcp.h"
 
-Send send;
-
 int a;
+Datalink link;
 
 void setup() {
-  Serial.begin(9600);
+  Serial.begin(115200);
   a = 0;
   // initial handshake (unimplimented)
 }
@@ -13,11 +12,8 @@ void setup() {
 
 void loop() {
   // example of data being injected to payload
-  send.payload[2] = a;
+  link.payload[2] = a;
   a++;
 
-  // embeds payload in packet and sends over serial
-  send.message = send.sensor_heartbeat();
-  Serial.print(send.serialise(send.message)); Serial.print("\n");
-  send.received_check();
+  link.send_payload();
 }

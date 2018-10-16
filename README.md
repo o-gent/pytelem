@@ -21,8 +21,3 @@ Current work:
 
 
 Issues:
-
-
-Currently only works on 9600 baud rate.. something to do with timings on dodgy reads and writes
-
-Currently for every three packets, two fail due to packet number not being correct, arduino not updating fast enough or python not sending ACK byte fast enough. 

@@ -1,12 +1,37 @@
 #include "tcp.h"
 
-Datalink::Datalink(){
-  // start serial communication here
+void Datalink::initialise(){
+  // initial handshake - decide which side sends first
+  int local;
+  int remote;
+  String remote_string = "";
+  randomSeed(analogRead(0));
+
+  while(true){
+    remote_string = ""; // reset
+    local = random(0,100);
+    Serial.println(local);
+    while(remote_string == ""){
+      remote_string = Serial.readString();
+    }
+    remote = remote_string.toInt();
+    if (local == remote){
+    }
+    else{
+      break;
+    }
+  }
+  if(local > remote){
+    order = true;
+  }
+  else{
+    order = false;
+  }
 }
 
 
 void Datalink::send_payload(){
-  // embeds payload in packet and sends over serial
+  /* co-ordinates functions - embeds payload in packet and sends over serial */
   this->message = this->packet_maker();
   Serial.print(this->serialise(this->message)); Serial.print("\n");
   this->received_check();
@@ -14,7 +39,7 @@ void Datalink::send_payload(){
 
 
 int* Datalink::packet_maker(){
-  // creates packet to be sent with header and footer data
+  /* creates packet to be sent with header and footer data */
   
   packet_count += 1;
 
@@ -37,7 +62,7 @@ int* Datalink::packet_maker(){
 
 
 String Datalink::serialise(int input[20]){
-  // changes array to string, for sending over serial
+  /* changes array to string, for sending over serial */
   
   String output;
   

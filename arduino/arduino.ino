@@ -1,10 +1,13 @@
 #include "tcp.h"
 
+
 int a;
 Datalink link;
 
+
 void setup() {
   Serial.begin(115200);
+  link.initialise();
   a = 0;
   // initial handshake (unimplimented)
 }

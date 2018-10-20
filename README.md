@@ -14,7 +14,6 @@ The main.py and arduino.ino are example usages - serial_handle.py and tcp.cpp in
 
 ### Current work:
 
-
 - [ ] implement checksum arduino functionality and validity check
 
 - [ ] implement different packet types to allow for unchecked and checked packets (TCP/UDP)
@@ -27,3 +26,45 @@ The main.py and arduino.ino are example usages - serial_handle.py and tcp.cpp in
 
 
 ### Issues:
+
+<O_o>
+
+
+#### Notes:
+
+Data requester decides if packets are error checked - during handshake
+
+Serial Handler
+    Queues packets 
+    Routes packets
+
+Can different types of packets - each requires a handshake
+
+Kw argument to decide if packet header/footer returned 
+
+Handshake decides who is sending 
+
+Beginning byte decides if conformation or not. 
+
+
+
+###packet design - 
+
+pre-header>
+whether last packet was received correctly (0 if no error checking);
+packets left in round;
+// if packets to follow;
+// handshake or not; (within datatype)
+// if this is a full packet; (can be determined by length)
+
+header>
+//error checking; (associated with ID)
+id;
+data type;
+packet number;
+
+payload>
+message;
+
+footer>
+checksum;

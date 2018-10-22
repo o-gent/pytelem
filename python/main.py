@@ -1,5 +1,4 @@
-# resisting urges to semicolon
-from serial_handle import datalink
+from datalink import Datalink
 
 
 def main():
@@ -12,7 +11,7 @@ def main():
 if __name__ == "__main__":
     # start communication with Arduino and initilise datalink class
     port = "COM4"
-    link = datalink(port)
+    link = Datalink(port)
     
     while True:
         main()

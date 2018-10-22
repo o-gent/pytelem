@@ -1,11 +1,14 @@
 #include "tcp.h"
 
-void Datalink::initialise(){
+
+void Datalink::_stream_start(){
   // initial handshake - decide which side sends first
+  // initialise function variables  
   int local;
   int remote;
   String remote_string = "";
   randomSeed(analogRead(0));
+
 
   while(true){
     remote_string = ""; // reset
@@ -30,6 +33,52 @@ void Datalink::initialise(){
 }
 
 
+void Datalink::_id_register(String id_str, bool ACK){
+
+}
+
+
+void Datalink::_send(){
+
+}
+
+
+void Datalink::_receive(){
+
+}
+
+
+String Datalink::_serialise(int* packet){
+
+}
+
+
+bool Datalink::_deserialise(String raw_message){
+
+}
+
+
+void Datalink::_serial_send(String message){
+
+}
+
+
+String Datalink::_serial_receive(){
+
+}
+
+
+void Datalink::serial_handler(){
+
+}
+
+
+void Datalink::send(String id_str, int* message, bool ACK){
+
+}
+
+
+// LEGACY
 void Datalink::send_payload(){
   /* co-ordinates functions - embeds payload in packet and sends over serial */
   this->message = this->packet_maker();

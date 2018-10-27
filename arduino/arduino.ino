@@ -1,4 +1,4 @@
-#include "tcp.h"
+#include "datalink.h"
 
 
 int example_data;
@@ -7,8 +7,8 @@ Datalink link;
 
 void setup() {
   Serial.begin(115200);
-  link.initialise();
-  a = 0;
+  link._stream_start();
+  example_data = 0;
   // initial handshake (unimplimented)
 }
 

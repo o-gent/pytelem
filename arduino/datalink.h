@@ -1,7 +1,8 @@
-#ifndef tcp_H
-#define tcp_H
+#ifndef datalink_H
+#define datalink_H
 
 #include <Arduino.h> 
+#include "list.h"
 
 class Datalink{
   private:
@@ -16,14 +17,16 @@ class Datalink{
 
       int* payload;
 
-      int check_sum
+      int check_sum;
     } packet_structure;
 
     // declare class variables
-    int* packets[10] = {0}; // store structs within this 
-    int idnum;
-    int* queue[10] = {0}; // need to make this act as a list
     bool order;
+    int send_left;
+    int receive_left;
+    int temp_id;
+    List packets;
+    List queue;
 
     // LEGACY declare variables for class
     int packet_count = 0;
@@ -34,16 +37,13 @@ class Datalink{
   
 
   public:
-    int payload[10] = {0};
-    int* message;
-    
     // function names same as python
     void _stream_start();
     void _id_register(String id_str, bool ACK);
     void _send();
     void _receive();
     String _serialise(int* packet);
-    bool _deserialise(String raw_message);
+    int* _deserialise(String raw_message);
     void _serial_send(String message);
     String _serial_receive();
     void serial_handler();
@@ -51,6 +51,9 @@ class Datalink{
 
 
     //legacy
+    int payload[10] = {0};
+    int* message;
+
     int* packet_maker();
     String serialise(int input[20]);
     void received_check();

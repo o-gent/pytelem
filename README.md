@@ -60,7 +60,7 @@ packets left in round;
 header>
 //error checking; (associated with ID)
 id;
-data type;
+//data type;
 packet number;
 
 payload>

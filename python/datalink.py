@@ -149,20 +149,15 @@ class Datalink():
         
         # logic for send/receive order based on which platform started
         # keep sending/receiving while either side has packets left for cycle
-        if self.order == 'local':
-            _send()
-            while send_left > 0:
-                _send()
-            while receive_left > 0:
-                _send()
         if self.order == 'remote':
             _receive()
+        
+        _send()
+        while send_left > 0:
             _send()
-            while send_left >0 :
-                _send()
-            while receive_left > 0:
-                _send()
-
+        while receive_left > 0:
+            _send()
+        
         # secondary function of serial_handler
         def _send():
             """ calls _receive() each cycle """
@@ -179,7 +174,9 @@ class Datalink():
                     packet_num = self.packets[id_num]['packet_num']
                     self.packets[id_num]['packet_num'] += 1
                     ack = self.packets[id_num]['ACK']
+
                     last_packet_received = 1
+                    
                     checksum = 0
                     # form packet
                     packet = []

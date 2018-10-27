@@ -9,7 +9,7 @@ Currently packets are arranged to have a header, payload and footer. Header cont
 
 Python packet interpreter checks validity of packets by keeping track of packet number, by checking packet begins with correct characters and checksum.
 
-The main.py and arduino.ino are example usages - serial_handle.py and tcp.cpp include classes which are to integrate seem-lessly with other projects making telemetry as easy as possible
+The main.py and arduino.ino are example usages - datalink.py and datalink.cpp include classes which are to integrate seemlessly with other projects making telemetry as easy as possible
 
 
 ### Current work:
@@ -27,7 +27,7 @@ The main.py and arduino.ino are example usages - serial_handle.py and tcp.cpp in
 
 ### Issues:
 
-<O_o>
+Undergoing major changes - LEGACY code still functional but new code is completely untested.
 
 
 #### Notes:

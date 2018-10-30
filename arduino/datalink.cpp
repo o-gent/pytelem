@@ -101,15 +101,15 @@ void Datalink::_receive(){
 }
 
 
-String Datalink::_serialise(int* packet){
+String Datalink::_serialise(int packet[20]){
 /* changes array to string, for sending over serial */
   
   String output;
   
   output = "<";
-  for(int a = 1; a < 20; a++){
+  for(int a = 0; a < 20; a++){
     output += "-";
-    output += input[a];
+    output += packet[a];
   }
   output += ">";
 
@@ -119,7 +119,7 @@ String Datalink::_serialise(int* packet){
 
 bool Datalink::_deserialise(String raw_message){
   // slightly different to python version
-  // returns a bool and modifies object current_packet variable instead
+  // returns a bool and modifies this->current_packet variable instead
 
   // first check 
   if(raw_message.startsWith("<") && raw_message.endsWith(">\n")){
@@ -150,15 +150,20 @@ String Datalink::_serial_receive(){
 }
 
 
-void Datalink::send(String id_str, int* message, bool ACK){
+void Datalink::send(int id_, int* message, bool ACK){
   // main user function - send an array with id
 
   // check if exists, if not, register
 }
 
 
+int* Datalink::get(int id_){
 
-// LEGACY
+}
+
+
+
+// LEGACY - LEGACY - LEGACY
 
 void Datalink::send_payload(){
   /* co-ordinates functions - embeds payload in packet and sends over serial */

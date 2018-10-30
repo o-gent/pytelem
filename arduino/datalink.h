@@ -25,12 +25,12 @@ class Datalink{
     int send_left;
     int receive_left;
     int temp_id;
+    int current_packet[20] = {0}; // also a legacy variable
     List packets;
     List queue;
 
     // LEGACY declare variables for class
     int packet_count = 0;
-    int current_packet[20] = {0};
     bool ack_check;
     char r;
     char b = '1';

@@ -35,15 +35,14 @@ void Datalink::_stream_start(){
 
 void Datalink::_id_register(int idnum, bool ACK){
   // packets structure: [0] = packet_num, [1] = ACK, [2 onwards] = payload
-  packets[idnum][0] = 0
-  if(ACK){packets[idnum][1] = 1}
-  if(ACK){packets[idnum][1] = 0}
-
+  this->packets[idnum][0] = 0
+  if(ACK){this->packets[idnum][1] = 1}
+  if(ACK){this->packets[idnum][1] = 0}
 }
 
+
 void Datalink::serial_handler(){
-  
-  send_left = queue.len();
+  send_left = this->queue.len();
 
   if(order == false){
     this->_receive();
@@ -61,31 +60,30 @@ void Datalink::serial_handler(){
 
 void Datalink::_send(){
   int cycle_idnum; //temporary variable
-  int current_packet[20];
   int check_sum;
   String str_message; //serialised packet
 
   // check queue has something in it
-  if(queue.len() > 0){
+  if(this->queue.len() > 0){
     //cycle through queue
-    for(int i = queue.len(), i--, i > 0){
+    for(int i = this->queue.len(), i--, i > 0){
       // get id from queue
-      cycle_idnum = queue.pop();
+      cycle_idnum = this->queue.pop();
 
-      send_left = queue.len();
+      send_left = this->queue.len();
       //form packet
-      current_packet[0] = 1; // last packet received
-      current_packet[1] = send_left;
-      current_packet[2] = cycle_idnum;
-      current_packet[3] = packets[cycle_idnum][0]; // packet_num
-      packets[cycle_idnum][0]++;
+      this->current_packet[0] = 1; // last packet received
+      this->current_packet[1] = send_left;
+      this->current_packet[2] = cycle_idnum;
+      this->current_packet[3] = this->packets[cycle_idnum][0]; // packet_num
+      this->packets[cycle_idnum][0]++;
 
       //calculate checksum
       check_sum = 0;
-      current_packet[19] = check_sum;
+      this->current_packet[19] = check_sum;
 
       //store current id incase packet failure
-      temp_id = cycle_idnum;
+      this->temp_id = cycle_idnum;
       // serialise packet
       str_message = this->_serialise(current_packet);
       // send
@@ -99,7 +97,6 @@ void Datalink::_send(){
 
 void Datalink::_receive(){
   String raw_message;
-  int current_packet[20];
 
 }
 
@@ -111,8 +108,8 @@ String Datalink::_serialise(int* packet){
   
   output = "<";
   for(int a = 1; a < 20; a++){
-    output += input[a];
     output += "-";
+    output += input[a];
   }
   output += ">";
 
@@ -120,8 +117,25 @@ String Datalink::_serialise(int* packet){
 }
 
 
-int* Datalink::_deserialise(String raw_message){
+bool Datalink::_deserialise(String raw_message){
+  // slightly different to python version
+  // returns a bool and modifies object current_packet variable instead
 
+  // first check 
+  if(raw_message.startsWith("<") && raw_message.endsWith(">\n")){
+
+    // second check
+    // this will fail if packet isn't complete
+    for(int i = 0, i++, i<20){
+      this->current_packet[i] = toInt(getValue(raw_message, '-', i));
+    }
+
+    return true; 
+  }
+  
+  else{
+    return false;
+  }
 }
 
 
@@ -131,15 +145,17 @@ void Datalink::_serial_send(String message){
 
 
 String Datalink::_serial_receive(){
-  // returns string from serial
+  // returns String from serial
+
 }
 
 
 void Datalink::send(String id_str, int* message, bool ACK){
   // main user function - send an array with id
 
-  //check if exists, if not, register
+  // check if exists, if not, register
 }
+
 
 
 // LEGACY

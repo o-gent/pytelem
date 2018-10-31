@@ -51,7 +51,7 @@ class Datalink{
   public:
     // public function declarations (same as python)
     void serial_handler();
-    void send(int id_, int* message, bool ACK);
+    void send(int id_, int* message);
     int* get(int id_); 
 
     

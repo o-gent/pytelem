@@ -34,10 +34,11 @@ void Datalink::_stream_start(){
 
 
 void Datalink::_id_register(int idnum, bool ACK){
-  // packets structure: [0] = packet_num, [1] = ACK, [2 onwards] = payload
-  this->packets[idnum][0] = 0
-  if(ACK){this->packets[idnum][1] = 1}
-  if(ACK){this->packets[idnum][1] = 0}
+  // packets structure: [1] = packet_num, [2] = ACK, [3 onwards] = payload
+  this->packets[idnum][0] = 1 // says this id exists for checks..
+  this->packets[idnum][1] = 0
+  if(ACK){this->packets[idnum][2] = 1}
+  if(ACK){this->packets[idnum][2] = 0}
 }
 
 
@@ -75,8 +76,13 @@ void Datalink::_send(){
       this->current_packet[0] = 1; // last packet received
       this->current_packet[1] = send_left;
       this->current_packet[2] = cycle_idnum;
-      this->current_packet[3] = this->packets[cycle_idnum][0]; // packet_num
-      this->packets[cycle_idnum][0]++;
+      this->current_packet[3] = this->packets[cycle_idnum][1]; // packet_num
+      this->packets[cycle_idnum][1]++; // incriment packet_num stored for ID
+
+      // inject payload
+      for(int i = 4; int j = 3, i++;j++, i<=13, j<=12){
+        this->current_packet[i] = this->packets[cycle_idnum][j];
+      }
 
       //calculate checksum
       check_sum = 0;
@@ -98,6 +104,13 @@ void Datalink::_send(){
 void Datalink::_receive(){
   String raw_message;
 
+}
+
+
+void Datalink::_failed(){
+  // request new packet with special packet and recurse   fUDGING
+  this->_serial_send('<-0-0-0-0-0-0-0-0-0-0-0-0-0-0-0-0-0-0-0-0>')
+  this->_receive()
 }
 
 
@@ -145,20 +158,52 @@ void Datalink::_serial_send(String message){
 
 
 String Datalink::_serial_receive(){
-  // returns String from serial
+  /* returns String from serial */
+  
+  String readString;
 
+  while (Serial.available()) { 
+    if (Serial.available() > 0) {
+      char c = Serial.read();  //gets one byte from serial buffer
+      if(c == "\n"){
+        break; // stops reading once end of line reaches
+      }
+      readString += c; //makes the string readString
+    } 
+  }
+
+  return readString;
 }
 
 
-void Datalink::send(int id_, int* message, bool ACK){
-  // main user function - send an array with id
-
+void Datalink::send(int id_, int message[10]){
+  /* main user function - send an array with id */
+  
   // check if exists, if not, register
+  if(this->packets[id_][0] == 0){
+    this->_id_register(id_)
+  }
+
+  // transfer message to packets[id_][payload]
+  for(int i = 0; int j = 3, i++;j++, i<=9, j<=12){
+    this->packets[cycle_idnum][j] = message[i];
+  } 
+
+  // adds id_ to send queue
+  this->queue.add(id_)
 }
 
 
 int* Datalink::get(int id_){
-
+  /* returns payload of id_ NOTE: will return 0 array if not registered*/
+  int return_packet[10];
+  
+  // copy payload from this->packets
+  for(int i = 0; int j = 3, i++;j++, i<=9, j<=12){
+    return_packet[i] = this->packets[cycle_idnum][j];
+  }
+  
+  return return_packet
 }
 
 

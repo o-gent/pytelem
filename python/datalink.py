@@ -39,7 +39,6 @@ class Datalink():
         def test():
             # could be anything as long as definitive result
             local = r.randint(0,100)
-            self._serial_send(str(local))
             remote = self._serial_receive()
             self._serial_send(str(local))
             return remote, local
@@ -212,9 +211,6 @@ class Datalink():
         # will continue if packet was correct
         if packet:
             packet : list
-            # compare current packet_num with packet_num stored locally with id
-            if int(packet[3]) != self.packets[packet[2]]['packet_num']:
-                self._failed()
 
             # catch failed send packets..
             if packet[0] == 0:
@@ -223,14 +219,21 @@ class Datalink():
                 # FUDGE: makes sure packet number is same as last time as it will be incremented
                 self.packets[self.temp_id]['packet_num'] -= 1
                 self._send()
+            
+            # compare current packet_num with packet_num stored locally with id
+            if int(packet[3]) != self.packets[packet[2]]['packet_num']:
+                self._failed()
 
             # if id not registered, register.
             if not self.packets[packet[2]]:
+                """
+                packet no longer stores ACK and other issues..
                 if packet[3] == 1:
                     ack = True
                 else: 
                     ack = False
-                self._id_register(packet[2], ack)
+                """
+                self._id_register(packet[2], True)
             
             # fetch data from packet and store
             id_num = packet[2] # get id

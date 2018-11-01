@@ -7,9 +7,6 @@ class List{
         int queue[20];
         int list_index;
     public:
-        void make(int key, int* values);
-        int get_values(int key);
-
         int add(int value);
         int pop();
         int len();

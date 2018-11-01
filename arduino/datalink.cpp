@@ -1,7 +1,7 @@
 #include "datalink.h"
  
 
-void Datalink::_stream_start(){
+void Datalink::stream_start(){
   // initial handshake - decide which side sends first
   // initialise function variables  
   int local;
@@ -13,9 +13,12 @@ void Datalink::_stream_start(){
   while(true){
     remote_string = ""; // reset
     local = random(0,100);
+    
     Serial.println(local);
+    
     while(remote_string == ""){
       remote_string = Serial.readString();
+      delay(10);
     }
     remote = remote_string.toInt();
     if (local == remote){
@@ -35,15 +38,16 @@ void Datalink::_stream_start(){
 
 void Datalink::_id_register(int idnum, bool ACK){
   // packets structure: [1] = packet_num, [2] = ACK, [3 onwards] = payload
-  this->packets[idnum][0] = 1 // says this id exists for checks..
-  this->packets[idnum][1] = 0
-  if(ACK){this->packets[idnum][2] = 1}
-  if(ACK){this->packets[idnum][2] = 0}
+  this->packets[idnum][0] = 1; // says this id exists for checks..
+  this->packets[idnum][1] = 0;
+  if(ACK){this->packets[idnum][2] = 1;}
+  if(ACK){this->packets[idnum][2] = 0;}
 }
 
 
 void Datalink::serial_handler(){
   send_left = this->queue.len();
+  Serial.print(send_left);
 
   if(order == false){
     this->_receive();
@@ -67,7 +71,7 @@ void Datalink::_send(){
   // check queue has something in it
   if(this->queue.len() > 0){
     //cycle through queue
-    for(int i = this->queue.len(), i--, i > 0){
+    for(int i = this->queue.len(); i--; i > 0){
       // get id from queue
       cycle_idnum = this->queue.pop();
 
@@ -80,7 +84,7 @@ void Datalink::_send(){
       this->packets[cycle_idnum][1]++; // incriment packet_num stored for ID
 
       // inject payload
-      for(int i = 4; int j = 3, i++;j++, i<=13, j<=12){
+      for(int i = 4, j = 3; i<=13, j<=12; i++, j++){
         this->current_packet[i] = this->packets[cycle_idnum][j];
       }
 
@@ -93,7 +97,7 @@ void Datalink::_send(){
       // serialise packet
       str_message = this->_serialise(current_packet);
       // send
-      this->_serial_send(str_message)
+      this->_serial_send(str_message);
       //wait for error checking
       this->_receive();
     }
@@ -102,7 +106,41 @@ void Datalink::_send(){
 
 
 void Datalink::_receive(){
-  String raw_message;
+  // gets new message - stored in object variable
+  if(this->_deserialise(this->_serial_receive())){
+    // catch failed send packets..
+    if(this->current_packet[0] == 0){
+      // read failed id and go back to send
+      this->queue.add(this->temp_id);
+      // FUDGe: reduces temp_id packet number to same as last time..
+      this->packets[this->temp_id][1]--;
+      this->_send();
+    }
+
+    // compare incoming packet_num with stored
+    if(this->current_packet != this->packets[this->current_packet[2]][1]){
+      this->_failed();
+    }
+
+    //if id not regestered, register.
+    if(this->packets[current_packet[2]][0] == 0){
+      this->_id_register(current_packet[2], true);
+    }
+
+    // fetch data from packet and store
+    this->packets[this->current_packet[2]][1]++;
+    
+    for(int i = 4, j = 3; i<=13, j<=12; i++,j++){
+    this->current_packet[i] = this->packets[this->current_packet[2]][j];
+    }
+
+    // update receive left 
+    this->receive_left = current_packet[1]; 
+  }
+
+  else{
+    this->_failed();
+  }
 
 }
 
@@ -139,8 +177,8 @@ bool Datalink::_deserialise(String raw_message){
 
     // second check
     // this will fail if packet isn't complete
-    for(int i = 0, i++, i<20){
-      this->current_packet[i] = toInt(getValue(raw_message, '-', i));
+    for(int i = 0; i<20; i++){
+      this->current_packet[i] = getValue(raw_message, '-', i).toInt();
     }
 
     return true; 
@@ -181,16 +219,16 @@ void Datalink::send(int id_, int message[10]){
   
   // check if exists, if not, register
   if(this->packets[id_][0] == 0){
-    this->_id_register(id_)
+    this->_id_register(id_, true);
   }
-
+  
   // transfer message to packets[id_][payload]
-  for(int i = 0; int j = 3, i++;j++, i<=9, j<=12){
-    this->packets[cycle_idnum][j] = message[i];
-  } 
-
+  for(int i_ = 0, j_ = 3; i_<10, j_<13; i_++,j_++){
+    this->packets[id_][j_] = message[i_];
+  }
+   
   // adds id_ to send queue
-  this->queue.add(id_)
+  this->queue.add(id_);
 }
 
 
@@ -199,13 +237,33 @@ int* Datalink::get(int id_){
   int return_packet[10];
   
   // copy payload from this->packets
-  for(int i = 0; int j = 3, i++;j++, i<=9, j<=12){
-    return_packet[i] = this->packets[cycle_idnum][j];
+  for(int i = 0, j = 3; i<=9, j<=12; i++, j++){
+    return_packet[i] = this->packets[id_][j];
   }
   
-  return return_packet
+  return return_packet;
 }
 
+
+
+
+
+
+String getValue(String data, char separator, int index)
+{
+    int found = 0;
+    int strIndex[] = { 0, -1 };
+    int maxIndex = data.length() - 1;
+
+    for (int i = 0; i <= maxIndex && found <= index; i++) {
+        if (data.charAt(i) == separator || i == maxIndex) {
+            found++;
+            strIndex[0] = strIndex[1] + 1;
+            strIndex[1] = (i == maxIndex) ? i+1 : i;
+        }
+    }
+    return found > index ? data.substring(strIndex[0], strIndex[1]) : "";
+}
 
 
 // LEGACY - LEGACY - LEGACY

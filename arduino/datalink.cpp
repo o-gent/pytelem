@@ -47,7 +47,6 @@ void Datalink::_id_register(int idnum, bool ACK){
 
 void Datalink::serial_handler(){
   send_left = this->queue.len();
-  Serial.print(send_left);
 
   if(order == false){
     this->_receive();
@@ -78,9 +77,11 @@ void Datalink::_send(){
       send_left = this->queue.len();
       //form packet
       this->current_packet[0] = 1; // last packet received
+      
       this->current_packet[1] = send_left;
       this->current_packet[2] = cycle_idnum;
       this->current_packet[3] = this->packets[cycle_idnum][1]; // packet_num
+      
       this->packets[cycle_idnum][1]++; // incriment packet_num stored for ID
 
       // inject payload
@@ -147,8 +148,8 @@ void Datalink::_receive(){
 
 void Datalink::_failed(){
   // request new packet with special packet and recurse   fUDGING
-  this->_serial_send('<-0-0-0-0-0-0-0-0-0-0-0-0-0-0-0-0-0-0-0-0>')
-  this->_receive()
+  this->_serial_send("<-0-0-0-0-0-0-0-0-0-0-0-0-0-0-0-0-0-0-0-0>");
+  this->_receive();
 }
 
 

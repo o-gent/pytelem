@@ -94,7 +94,7 @@ class Datalink():
         requires "-" to start to allow C++ to work...
         """
         output = "<"
-        for i in output:
+        for i in packet:
             output += "-"
             output += str(i)
         output += ">"
@@ -113,11 +113,13 @@ class Datalink():
             # second check + try, except loop if no "-" exist
             try:
                 datapacket = raw_message[1:-1].split("-")
-
-                if int(datapacket[2]) == self.packet_num: 
-                    return datapacket
-                else: 
-                    return False
+                
+                # convert datapacket string to list of integers
+                for index, num in enumerate(datapacket):
+                    try: datapacket[index] = int(num)
+                    except: pass
+                
+                return datapacket
             except:
                 return False
         else: 
@@ -208,8 +210,15 @@ class Datalink():
     def _receive(self) -> None:
         raw_message = self._serial_receive()
         packet = self._deserialise(raw_message)
-        # will continue if packet was correct
+        
+        # continue if packet was correct
         if packet:
+            
+            # check if packet is default no payload
+            if packet[0] == 1 and packet[2] == 0:
+                # end _receive()
+                return None
+
             packet : list
 
             # catch failed send packets..

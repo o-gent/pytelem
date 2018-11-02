@@ -108,6 +108,17 @@ void Datalink::_send(){
 void Datalink::_receive(){
   // gets new message - stored in object variable
   if(this->_deserialise(this->_serial_receive())){
+
+    // check if packet has no payload - id 0
+    // is failed packet
+    if(this->current_packet[0] == 1){
+      // id
+      if(this->current_packet[2] == 0){
+        // end _receive()
+        return void();
+      } 
+    }
+
     // catch failed send packets..
     if(this->current_packet[0] == 0){
       // read failed id and go back to send

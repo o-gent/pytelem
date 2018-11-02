@@ -65,6 +65,7 @@ class Datalink():
     def _id_register(self, id_, ACK : bool) -> None:
         """needs work as could be conflict from each device creating same IDs"""
         
+        """
         # store packet information under unique numerical id
         self.packets[self._idnum] = {}
 
@@ -77,15 +78,17 @@ class Datalink():
             id_num = self.packets[id_]
         else:
             # id_ assumed int
-            id_num = id_
 
+            id_num = id_
         self._idnum += 1 # increment for next handshake
+        """
+        self.packets[id_] = {}
 
         # setting attributes for id
-        self.packets[id_num]['packet_num'] = 0
-        if ACK: self.packets[id_num]['ACK'] = 1
-        else: self.packets[id_num]['ACK'] = 0
-        self.packets[id_num]['payload'] = [0]
+        self.packets[id_]['packet_num'] = 0
+        if ACK: self.packets[id_]['ACK'] = 1
+        else: self.packets[id_]['ACK'] = 0
+        self.packets[id_]['payload'] = [0]
 
 
     def _serialise(self, packet : list) -> str:
@@ -94,10 +97,12 @@ class Datalink():
         requires "-" to start to allow C++ to work...
         """
         output = "<"
+        
         for i in packet:
             output += "-"
             output += str(i)
         output += ">"
+
         return output
     
 
@@ -121,8 +126,10 @@ class Datalink():
                 
                 return datapacket
             except:
+                print(2)
                 return False
-        else: 
+        else:
+            print(3)
             return False
 
 
@@ -140,7 +147,7 @@ class Datalink():
         while len(r) == 0:
             r = self.conn.readline().decode("utf-8")
         
-        print('recieved: ', r)
+        print('received: ', r)
         return r
 
 
@@ -202,6 +209,7 @@ class Datalink():
                 self._receive()
         else:
             # send default packet
+            print('no packets queued')
             packet = [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
             self._serial_send(self._serialise(packet))
             self._receive()
@@ -221,6 +229,11 @@ class Datalink():
 
             packet : list
 
+
+            print(packet)
+            print(self.packets)
+
+
             # catch failed send packets..
             if packet[0] == 0:
                 # read failed id and go back to __send()
@@ -228,21 +241,14 @@ class Datalink():
                 # FUDGE: makes sure packet number is same as last time as it will be incremented
                 self.packets[self.temp_id]['packet_num'] -= 1
                 self._send()
-            
-            # compare current packet_num with packet_num stored locally with id
-            if int(packet[3]) != self.packets[packet[2]]['packet_num']:
-                self._failed()
 
             # if id not registered, register.
-            if not self.packets[packet[2]]:
-                """
-                packet no longer stores ACK and other issues..
-                if packet[3] == 1:
-                    ack = True
-                else: 
-                    ack = False
-                """
-                self._id_register(packet[2], True)
+            try: self.packets[packet[2]]
+            except: self._id_register(packet[2], True)
+
+             # compare current packet_num with packet_num stored locally with id
+            if int(packet[3]) != self.packets[packet[2]]['packet_num']:
+                self._failed()
             
             # fetch data from packet and store
             id_num = packet[2] # get id
@@ -268,8 +274,8 @@ class Datalink():
         """ send an array, specify id_str for multiple messages to different places """
         
         # check if exists, if not then register
-        if not self.packets[id_str]:
-            self._id_register(id_str, ACK)
+        try: self.packets[id_str]
+        except: self._id_register(id_str, ACK)
         
         id_num = self.packets[id_str]
         # adds payload to ID dictionary

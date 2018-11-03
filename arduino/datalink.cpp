@@ -1,5 +1,5 @@
 #include "datalink.h"
- 
+
 
 void Datalink::stream_start(){
   // initial handshake - decide which side sends first
@@ -8,7 +8,6 @@ void Datalink::stream_start(){
   int remote;
   String remote_string = "";
   randomSeed(analogRead(0));
- 
 
   while(true){
     remote_string = ""; // reset
@@ -32,6 +31,8 @@ void Datalink::stream_start(){
   }
   else{
     order = false;
+    delay(10);
+    this->_receive();
   }
 }
 
@@ -47,10 +48,7 @@ void Datalink::_id_register(int idnum, bool ACK){
 
 void Datalink::serial_handler(){
   send_left = this->queue.len();
-
-  if(order == false){
-    this->_receive();
-  }
+  
   this->_send();
   while(send_left > 0){
     this->_send();
@@ -73,7 +71,7 @@ void Datalink::_send(){
     for(int i = this->queue.len(); i--; i > 0){
       // get id from queue
       cycle_idnum = this->queue.pop();
-
+      
       send_left = this->queue.len();
       //form packet
       this->current_packet[0] = 1; // last packet received
@@ -83,7 +81,7 @@ void Datalink::_send(){
       this->current_packet[3] = this->packets[cycle_idnum][1]; // packet_num
       
       this->packets[cycle_idnum][1]++; // incriment packet_num stored for ID
-
+      
       // inject payload
       for(int i = 4, j = 3; i<=13, j<=12; i++, j++){
         this->current_packet[i] = this->packets[cycle_idnum][j];
@@ -109,7 +107,7 @@ void Datalink::_send(){
 void Datalink::_receive(){
   // gets new message - stored in object variable
   if(this->_deserialise(this->_serial_receive())){
-
+    
     // check if packet has no payload - id 0
     // is failed packet
     if(this->current_packet[0] == 1){
@@ -120,31 +118,38 @@ void Datalink::_receive(){
       } 
     }
 
+
     // catch failed send packets..
     if(this->current_packet[0] == 0){
+
       // read failed id and go back to send
       this->queue.add(this->temp_id);
+
       // FUDGe: reduces temp_id packet number to same as last time..
       this->packets[this->temp_id][1]--;
+      
       this->_send();
     }
+
 
     // compare incoming packet_num with stored
     if(this->current_packet != this->packets[this->current_packet[2]][1]){
       this->_failed();
     }
 
+
     //if id not regestered, register.
     if(this->packets[current_packet[2]][0] == 0){
       this->_id_register(current_packet[2], true);
     }
 
+
     // fetch data from packet and store
     this->packets[this->current_packet[2]][1]++;
-    
     for(int i = 4, j = 3; i<=13, j<=12; i++,j++){
     this->current_packet[i] = this->packets[this->current_packet[2]][j];
     }
+
 
     // update receive left 
     this->receive_left = current_packet[1]; 
@@ -166,7 +171,6 @@ void Datalink::_failed(){
 
 String Datalink::_serialise(int packet[20]){
 /* changes array to string, for sending over serial */
-  
   String output;
   
   output = "<";
@@ -183,20 +187,20 @@ String Datalink::_serialise(int packet[20]){
 bool Datalink::_deserialise(String raw_message){
   // slightly different to python version
   // returns a bool and modifies this->current_packet variable instead
-
-  // first check 
-  if(raw_message.startsWith("<") && raw_message.endsWith(">\n")){
-
+  //Serial.print("deserialise:");Serial.print(raw_message);
+  // first check
+  if(raw_message.startsWith("<") && raw_message.endsWith(">")){
     // second check
     // this will fail if packet isn't complete
     for(int i = 0; i<20; i++){
-      this->current_packet[i] = getValue(raw_message, '-', i).toInt();
+      this->current_packet[i] = getValue(raw_message, '-', (i+1)).toInt();
     }
 
     return true; 
   }
   
   else{
+    Serial.print("check fail");
     return false;
   }
 }
@@ -209,20 +213,28 @@ void Datalink::_serial_send(String message){
 
 String Datalink::_serial_receive(){
   /* returns String from serial */
+  delay(10);
+  String readString = "";
   
-  String readString;
-
-  while (Serial.available()) { 
-    if (Serial.available() > 0) {
-      char c = Serial.read();  //gets one byte from serial buffer
-      if(c == "\n"){
-        break; // stops reading once end of line reaches
+  while (true) {
+    delay(2);
+    char c = Serial.read();  //gets one byte from serial buffer
+    
+    if (c == '<'){
+      readString += c;
+      while (true) {
+        delay(1);
+        char c = Serial.read();  //gets one byte from serial buffer
+        //Serial.print("CHAR: ");Serial.println(c);
+        
+        readString += c; //makes the string readString
+        if(c == '>'){
+          return readString; // stops reading once end of line reaches
+        }
       }
-      readString += c; //makes the string readString
-    } 
+    }
+  //pass
   }
-
-  return readString;
 }
 
 
@@ -257,10 +269,6 @@ int* Datalink::get(int id_){
 }
 
 
-
-
-
-
 String getValue(String data, char separator, int index)
 {
     int found = 0;
@@ -275,73 +283,4 @@ String getValue(String data, char separator, int index)
         }
     }
     return found > index ? data.substring(strIndex[0], strIndex[1]) : "";
-}
-
-
-// LEGACY - LEGACY - LEGACY
-
-void Datalink::send_payload(){
-  /* co-ordinates functions - embeds payload in packet and sends over serial */
-  this->message = this->packet_maker();
-  Serial.print(this->serialise(this->message)); Serial.print("\n");
-  this->received_check();
-}
-
-
-int* Datalink::packet_maker(){
-  /* creates packet to be sent with header and footer data */
-  
-  packet_count += 1;
-
-  //header
-  current_packet[1] = 0;
-  current_packet[2] = 1;   //packet type
-  current_packet[3] = packet_count;
-  current_packet[6] = 0;
-
-  //payload
-  for(unsigned int a = 1, b = 7; a<10; a++, b++){
-    current_packet[b] = payload[a];
-  }
-  
-  //footer - checksum to be implimented
-  current_packet[17] = 0;
-
-  return current_packet;
-}
-
-
-String Datalink::serialise(int input[20]){
-  /* changes array to string, for sending over serial */
-  
-  String output;
-  
-  output = "<";
-  for(unsigned int a = 1; a < 20; a++){
-    output += input[a];
-    output += "-";
-  }
-  output += ">";
-
-  return output;
-}
-
-
-void Datalink::received_check(){
-  ack_check = false;
-  do { 
-      //r = Serial.readString();
-      r = Serial.read();
-
-      while(r != '0' && r != '1'){
-        r = Serial.read();
-      }
-      
-      if(r == b){
-        ack_check = true;
-      }
-      else{
-        Serial.print(this->serialise(message)); Serial.print("\n");
-      }
-    } while(ack_check == false);
 }

@@ -8,9 +8,8 @@ int List::add(int value){
 
 
 int List::pop(){
-    int value = queue[list_index - 1];
     list_index--;
-    return value;
+    return queue[list_index];
 }
 
 int List::len(){

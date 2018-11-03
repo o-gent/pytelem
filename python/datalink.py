@@ -1,6 +1,7 @@
 # any functions named _x are for internal use only. 
 import serial
 import random as r
+import time
 
 
 # for reference
@@ -57,31 +58,18 @@ class Datalink():
         # evaluates results
         if remote > local:
             self.order = 'remote' # remote starts stream first
+            self._receive()
         else:
             self.order = 'local' # local starts stream first
+            time.sleep(1)
+            self._serial_send('<-1-0-0-0-0-0-0-0-0-0-0-0-0-0-0-0-0-0-0-0>')
+            self._receive()
         print(self.order)
 
 
     def _id_register(self, id_, ACK : bool) -> None:
         """needs work as could be conflict from each device creating same IDs"""
-        
-        """
-        # store packet information under unique numerical id
-        self.packets[self._idnum] = {}
 
-        if type(id_) == str:
-            # save string name under numerical id for incoming messages
-            self.packets[self._idnum]['id'] = id_
-            # linking id_(str) to id_number for lookup during sending 
-            self.packets[id_] = self._idnum
-            # fetching numerical id again (fudging)
-            id_num = self.packets[id_]
-        else:
-            # id_ assumed int
-
-            id_num = id_
-        self._idnum += 1 # increment for next handshake
-        """
         self.packets[id_] = {}
 
         # setting attributes for id
@@ -108,13 +96,9 @@ class Datalink():
 
     def _deserialise(self, raw_message: str):
         """ runs consistancy checks on packet, returns false if not consistent, else returns packet """
-
-        # if can't read packet - would need to resend anyway..
-        # need to rethink packet reciept.. 
         
         # first check 
         if raw_message.startswith("<") and raw_message.endswith(">\n"): 
-
             # second check + try, except loop if no "-" exist
             try:
                 datapacket = raw_message[1:-1].split("-")
@@ -124,12 +108,14 @@ class Datalink():
                     try: datapacket[index] = int(num)
                     except: pass
                 
-                return datapacket
+                return datapacket[1:]
+        
             except:
-                print(2)
+                print("packet could not be parsed (2)")
                 return False
+        
         else:
-            print(3)
+            print("packet could not be parsed (1)")
             return False
 
 
@@ -156,11 +142,9 @@ class Datalink():
         # initialises scope variables for use in secondary functions
         self.send_left = len(self._queue)
         self.receive_left = 0
+        self.temp_id = 0
         
-        # logic for send/receive order based on which platform started
         # keep sending/receiving while either side has packets left for cycle
-        if self.order == 'remote':
-            self._receive()
         
         self._send()
         while self.send_left > 0:
@@ -175,8 +159,10 @@ class Datalink():
         if self._queue:
             # cycle through queue
             for __ in self._queue:
+                
                 # get an id from queue
                 id_num = self._queue.pop()
+                
 
                 # fetch packet data
                 self.send_left = len(self._queue)
@@ -185,9 +171,11 @@ class Datalink():
                 self.packets[id_num]['packet_num'] += 1
                 ack = self.packets[id_num]['ACK']
 
+
                 last_packet_received = 1
-                
                 checksum = 0
+                
+                
                 # form packet
                 packet = []
                 packet.append(last_packet_received)
@@ -199,14 +187,16 @@ class Datalink():
                     packet.append(i)
                 packet.append(checksum)
 
+
                 # store id incase failure
                 self.temp_id = id_num
-                # serialise packet
-                string = self._serialise(packet)
+
                 # send
-                self._serial_send(string)
+                self._serial_send(self._serialise(packet))
+                
                 # wait for error checking
                 self._receive()
+        
         else:
             # send default packet
             print('no packets queued')
@@ -222,44 +212,54 @@ class Datalink():
         # continue if packet was correct
         if packet:
             
+            packet : list
+
             # check if packet is default no payload
             if packet[0] == 1 and packet[2] == 0:
                 # end _receive()
                 return None
 
-            packet : list
-
-
-            print(packet)
-            print(self.packets)
-
-
             # catch failed send packets..
             if packet[0] == 0:
+                
+                # check if id_ 0 failure
+                if self.temp_id == 0:
+                    packet = [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+                    self._serial_send(self._serialise(packet))
+
                 # read failed id and go back to __send()
                 self._queue.append(self.temp_id)
                 # FUDGE: makes sure packet number is same as last time as it will be incremented
                 self.packets[self.temp_id]['packet_num'] -= 1
                 self._send()
 
+
             # if id not registered, register.
             try: self.packets[packet[2]]
             except: self._id_register(packet[2], True)
+            
 
-             # compare current packet_num with packet_num stored locally with id
+            # compare current packet_num with packet_num stored locally with id
             if int(packet[3]) != self.packets[packet[2]]['packet_num']:
+                # if incosistent - failed..
+                print("packet: ",packet)
+                print(1, packet[3], self.packets[packet[2]]['packet_num'])
                 self._failed()
             
+
             # fetch data from packet and store
             id_num = packet[2] # get id
             self.packets[id_num]['packet_num'] += 1         # increment packet num
             self.packets[id_num]['payload'] = packet[5:-1]  # store payload
 
+
             # update receive left 
             self.receive_left = packet[1]
 
+
         # if packet not correct.. 
         else:
+            print(2)
             self._failed()
 
 
@@ -270,56 +270,25 @@ class Datalink():
         self._receive()
 
 
-    def send(self, id_str = 'default', message = [0], ACK = True) -> None:
+    def send(self, id_ = 1, message = [0], ACK = True) -> None:
         """ send an array, specify id_str for multiple messages to different places """
         
         # check if exists, if not then register
-        try: self.packets[id_str]
-        except: self._id_register(id_str, ACK)
+        try: self.packets[id_]
+        except: self._id_register(id_, ACK)
         
-        id_num = self.packets[id_str]
         # adds payload to ID dictionary
-        self.packets[id_num]['payload'] = message
+        self.packets[id_]['payload'] = message
         # adds ID to queue
-        self._queue.append(id_num)
+        self._queue.append(id_)
     
     
-    def get(self, id_ = 'default'):
+    def get(self, id_ = 1):
         """ returns payload of id if exists, otherwise returns false """
+        
         # gets payload of specified id from packets dict
-        if type(id_) == str:
-            if self.packets[id_]:
-                id_num = self.packets[id_]
-            else: 
-                # id doesn't exist..
-                return False
-        elif type(id_) == int:
-            if self.packets[id_]:
-                id_num = id_
-            else:
-                # id doesn't exist..
-                return False
+        if type(id_) == int:
+            try: self.packets[id_]
+            except: return False
         
-        return self.packets[id_num]['payload']
-
-
-    
-    # LEGACY - LEGACY - LEGACY
-    def get_packet(self):
-        """ fetches raw serial data from buffer, returns payload as list """
-
-        raw_message = self._serial_receive()
-        datapacket = self._deserialise(raw_message)
-        
-        if datapacket:
-            self.data = datapacket
-            self._serial_send("1")
-            self.packet_num += 1
-        else:
-            print("packet not recieved sucessfully")
-            self._serial_send("0") # request new data packet
-            # call packet_handle again..
-            self.get_packet() 
-
-        #returns full packet for debugging for now.
-        return self.data 
+        return self.packets[id_]['payload']

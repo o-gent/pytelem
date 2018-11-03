@@ -6,20 +6,6 @@
 
 class Datalink{
   private:
-    // packet structure
-    typedef struct {
-      bool ACK;
-      int packets_left_in_round;
-
-      int id;
-      int data_type;
-      int packet_number;
-
-      int* payload;
-
-      int check_sum;
-    } packet_structure;
-
     // declare class variables
     bool order;
     int send_left;
@@ -39,32 +25,12 @@ class Datalink{
     void _serial_send(String message);
     String _serial_receive();
 
-    
-    // LEGACY declare variables for class
-    int packet_count = 0;
-    bool ack_check;
-    char r;
-    char b = '1';
-
-
   public:
     // public function declarations (same as python)
     void stream_start(); // this is different to python
     void serial_handler();
     void send(int id_, int* message);
     int* get(int id_); 
-
-    
-
-    // LEGACY (required global variables to be changed)
-    int payload[10] = {0};
-    int* message;
-
-    int* packet_maker();
-    String serialise(int input[20]);
-    void received_check();
-    int serial_handler(String message);
-    void send_payload();
 };
 
 String getValue(String data, char separator, int index);

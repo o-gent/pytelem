@@ -3,8 +3,9 @@
 
 class List{
     private:
-        int* num_array[20][13] = {{0}};
-        int queue[20];
+        // only stores up to 4 packets - memory saving..
+        int* num_array[4][13] = {{0}};
+        int queue[5];
         int list_index;
     public:
         int add(int value);

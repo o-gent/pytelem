@@ -1,5 +1,5 @@
 from datalink import Datalink
-
+import time
 
 def main():
     # fetches and processes data, returns array with payload only
@@ -7,13 +7,18 @@ def main():
     link.serial_handler()
     print(link.get(id_=1))
     print(link.get(id_=2))
+
+    link.send(2, [800,0,0])
+
+    print("LOOP!")
+    
     # do stuff
 
 
 if __name__ == "__main__":
     # start communication with Arduino and initilise datalink class
 
-    port = "COM3"
+    port = "COM7"
     link = Datalink(port)
     
     while True:

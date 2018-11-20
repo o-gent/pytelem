@@ -1,7 +1,20 @@
-# any functions named _x are for internal use only. 
-import serial
-import random as r
+# any functions named _x are for internal use only.
 import time
+
+from utils import Logger
+l = Logger()
+
+# find device type
+import sys
+if sys.implementation.name == "cpython":
+    from serial import Serial 
+    import random as r
+if sys.implementation.name == "micropython":
+    # resolve implimentation difference between cpython and micropython.
+    from machine import UART
+    Serial = UART
+    from uos import urandom
+    r = lambda x: int(urandom(1)/256 * x) # only works for x less than 256. 
 
 
 # for reference
@@ -21,32 +34,49 @@ packet_structure = {
 class Datalink():
     def __init__(self, port):
         # start serial connection
-        self.conn = serial.Serial(port, 115200)
+        self.conn = Serial(port,  baudrate = 57000, timeout = 0.1)
+        
         #initise class wide variables
-        # next two are legacy
-        self.packet_num = 1
-        self.data = [0 for i in range(20)]
-        # new vars
         self.packets = {}
         self._idnum = 0 # makes sure each id made is unique
         self._queue = []
         self._order = 'unset'
+        self.temp_id = 0
+
         # initialises data stream..
         self._stream_start()
 
 
     def _stream_start(self) -> None:
+        
+        # regester default id
+        self._id_register(0,True)
+
+        i = 0
+
+        # ensure syncronisation
+        self._serial_send("start")
+        while self._serial_receive() != "start\n":
+            self._serial_send("start")       
+
         # decides order of send receive
         def test():
             # could be anything as long as definitive result
             local = r.randint(0,100)
-            remote = self._serial_receive()
             self._serial_send(str(local))
+            remote = self._serial_receive()
             return remote, local
         
         # checks if test is definitive
         while True:
             remote, local = test()
+            
+            i += 1
+            if i > 5:
+                self._stream_start()
+            
+            time.sleep(1)
+
             try: 
                 remote = int(remote)
                 if remote == local:
@@ -54,17 +84,31 @@ class Datalink():
                 else:
                     break
             except: pass
+
+        self._serial_send("end")
+        while self._serial_receive() != "end\n":
+            i += 1
+            if i > 5:
+                self._stream_start()
+            self._serial_send("end")
         
+        self._serial_receive()
+        time.sleep(1)
+        self._serial_receive()
+        time.sleep(1)
+        
+
         # evaluates results
         if remote > local:
             self.order = 'remote' # remote starts stream first
-            self._receive()
+            self._serial_receive()
         else:
             self.order = 'local' # local starts stream first
-            time.sleep(1)
             self._serial_send('<-1-0-0-0-0-0-0-0-0-0-0-0-0-0-0-0-0-0-0-0>')
-            self._receive()
-        print(self.order)
+            self._serial_receive()
+        
+        l.log(self.order)
+        l.log("syncronisation finished", 3)
 
 
     def _id_register(self, id_, ACK : bool) -> None:
@@ -111,29 +155,34 @@ class Datalink():
                 return datapacket[1:]
         
             except:
-                print("packet could not be parsed (2)")
+                l.log("packet could not be parsed (no - split)", 2)
                 return False
         
         else:
-            print("packet could not be parsed (1)")
+            l.log("packet could not be parsed ( < > error)", 2)
             return False
 
 
     def _serial_send(self, message: str):
         """ place holder """
-        self.conn.write(bytes(message, "utf-8"))
-        print('sent: ', message)
+        self.conn.write(bytes(message + '\n', "utf-8"))
+        l.log_root(message, 1)
 
 
     def _serial_receive(self) -> str:
         """ returns string from serial """
         r = ""
 
+        i = 0
         # COULD BE ISSUE?
         while len(r) == 0:
             r = self.conn.readline().decode("utf-8")
+            i += 1
+            if i > 10:
+                l.log("timeout!", 2)
+                return "False"
         
-        print('received: ', r)
+        l.log_root(r, 1)
         return r
 
 
@@ -168,6 +217,7 @@ class Datalink():
                 self.send_left = len(self._queue)
                 payload = self.packets[id_num]['payload']
                 packet_num = self.packets[id_num]['packet_num']
+                l.log("packet num = " + str(packet_num), 0)
                 self.packets[id_num]['packet_num'] += 1
                 ack = self.packets[id_num]['ACK']
 
@@ -181,7 +231,6 @@ class Datalink():
                 packet.append(last_packet_received)
                 packet.append(self.send_left)
                 packet.append(id_num)
-                packet.append(ack)
                 packet.append(packet_num)
                 for i in payload:
                     packet.append(i)
@@ -221,6 +270,7 @@ class Datalink():
 
             # catch failed send packets..
             if packet[0] == 0:
+                l.log("caught failed packet", 2)
                 
                 # check if id_ 0 failure
                 if self.temp_id == 0:
@@ -242,8 +292,7 @@ class Datalink():
             # compare current packet_num with packet_num stored locally with id
             if int(packet[3]) != self.packets[packet[2]]['packet_num']:
                 # if incosistent - failed..
-                print("packet: ",packet)
-                print(1, packet[3], self.packets[packet[2]]['packet_num'])
+                l.log("packet number comparision failed" + " actual: " + str(packet[3]) + " record: " + str(self.packets[packet[2]]['packet_num']), 2)
                 self._failed()
             
 
@@ -259,12 +308,13 @@ class Datalink():
 
         # if packet not correct.. 
         else:
-            print(2)
+            l.log(2, 2)
             self._failed()
 
 
     def _failed(self) -> None:
-        print("incoming packet failed - requesting new")
+        l.log("incoming packet failed - requesting new", 2)
+        time.sleep(0.1) # prevent recursion limit from happening too quickly
         # request new packet with special packet and recurse
         self._serial_send('<-0-0-0-0-0-0-0-0-0-0-0-0-0-0-0-0-0-0-0-0>') # FUDGE
         self._receive()

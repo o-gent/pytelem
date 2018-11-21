@@ -1,46 +1,35 @@
 # Telemetry-over-serial
 
-Allows arduino sensor data to be sent over a serial device with some TCP-like features to ensure reliable transmission.
-The interpretation program is written in python, each implementation can be found in their respective folders. 
+Allows telemerty communication between python devices - including specific support for micropython devices. 
 
+Arduino support is no longer being worked on, however is compatible with an earlier version of the python implimentation. 
 
-Currently packets are arranged to have a header, payload and footer. Header contains data type and packet number and footer contains a checksum of the payload. 
-
-
-Python packet interpreter checks validity of packets by keeping track of packet number, by checking packet begins with correct characters and checksum.
+Packet interpreter checks validity of packets by keeping track of packet number, by checking packet begins with correct characters and checksum.
 
 The main.py and arduino.ino are example usages - datalink.py and datalink.cpp include classes which are to integrate seemlessly with other projects making telemetry as easy as possible
 
 
 ### Current work:
 
-- [ ] implement checksum arduino functionality and validity check
+- impliment checksum functionality if needed 
 
-- [ ] implement structure for sending commands to arduino
-
-- [X] have some kind of packet identity so packets for different purposes can be requested
+- impliment way to reset system when disconnected so can be reconnected without restarting the program
 
 
 ### Issues:
 
-Undergoing major changes - LEGACY code still functional but new code is completely untested.
-
-Relatively high dynamic memory usage - probably due to use of arduino Strings. Could be reduced by using char arrays. https://arduino.stackexchange.com/questions/1013/how-do-i-split-an-incoming-string
+some random issues sometimes on startup - currently unknown
 
 
 #### Notes:
-
-Data requester decides if packets are error checked - during handshake
 
 Serial Handler
     Queues packets 
     Routes packets
 
-Can different types of packets - each requires a handshake
+Can different packet IDs
 
-Handshake decides who is sending 
-
-Beginning byte decides if conformation or not. 
+Handshake decides who is sending
 
 
 

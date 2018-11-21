@@ -1,20 +1,24 @@
 # any functions named _x are for internal use only.
 import time
 
-from utils import Logger
-l = Logger()
+from utils import Logger, uLogger
+
 
 # find device type
 import sys
 if sys.implementation.name == "cpython":
     from serial import Serial 
     import random as r
+    l = Logger()
+
 if sys.implementation.name == "micropython":
     # resolve implimentation difference between cpython and micropython.
     from machine import UART
     Serial = UART
     from uos import urandom
     r = lambda x: int(urandom(1)/256 * x) # only works for x less than 256. 
+    l = uLogger()
+
 
 
 # for reference
@@ -29,6 +33,7 @@ packet_structure = {
     
     'check_sum' : int               #-1:
 }
+
 
 
 class Datalink():

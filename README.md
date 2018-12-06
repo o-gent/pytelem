@@ -15,6 +15,9 @@ The main.py and arduino.ino are example usages - datalink.py and datalink.cpp in
 
 - impliment way to reset system when disconnected so can be reconnected without restarting the program
 
+- time packet cycle lengths
+
+- manage commands to start/stop receiving data types - modify que depending on what is wanted.. 
 
 ### Issues:
 

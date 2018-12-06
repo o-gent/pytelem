@@ -209,6 +209,9 @@ class Datalink():
     
     def _send(self) -> None:
         """ calls _receive() each cycle """
+
+        # see what data is currently wanted and adjust queue accordingly
+
         # check if anything in queue
         if self._queue:
             # cycle through queue

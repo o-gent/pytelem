@@ -1,6 +1,15 @@
 from client import connect
 from server import serve
 
+class datalink_setup():
+    def __enter__(self):
+        return Datalink('server')
+
+    def __exit__(self, type, value, traceback):
+            print(type)
+            return True
+
+
 class Datalink():
     def __init__(self, mode):
         self.mode = mode
@@ -13,6 +22,7 @@ class Datalink():
         #initise class wide variables
         self.packets = {}
         self._queue = []
+        self.temp_id = 0
 
 
     def _id_register(self, id_):
@@ -24,13 +34,14 @@ class Datalink():
         """ send recieve new data changes """
         self.sock.send(self.process_send().encode())
         self.process_recieve(self.sock.recv(1024))
+
         self._queue = []
 
     def refresh_server(self):
         self.process_recieve(self.sock.recv(1024))
         self.sock.send(self.process_send().encode())
-        self._queue = []
 
+        self._queue = []
 
     def process_recieve(self, recieved):
         for payload in string_to_list(recieved.decode()):
@@ -57,7 +68,7 @@ class Datalink():
             self.packets[id_]
         except:
             self._id_register(id_)
-            
+
         self.packets[id_]['payload'] = message
         # append id_ to self.queue
         self._queue.append(id_)
@@ -67,7 +78,7 @@ class Datalink():
         try: return self.packets[id_]['payload']
         except: return False
 
-    
+
 def list_to_string(the_list):
     """ converts list of ints to string """
     a = ''
@@ -86,5 +97,5 @@ def string_to_list(the_string):
     for secondary in enumerate(seperate_secondaries):
         l.append([])
         for item in secondary[1].split(',')[:-1]:
-            l[secondary[0]].append(float(item))
+            l[secondary[0]].append(int(item))
     return l
